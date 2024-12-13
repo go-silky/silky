@@ -1,6 +1,10 @@
 package silky
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+	"reflect"
+)
 
 type Controller[T any] struct {
 	renderer ViewRenderer[T]
@@ -43,4 +47,41 @@ func NewController[T any](renderer ViewRenderer[T], layout ...func(T) T) *Contro
 		c.layout = layout[0]
 	}
 	return c
+}
+
+func MakeResourceHandlers(controller any) ResourceHandlers {
+	controllerValue := reflect.ValueOf(controller)
+	fmt.Printf("Controller type: %T\n", controller)
+
+	handlers := ResourceHandlers{}
+
+	methodMap := map[string]*http.HandlerFunc{
+		"Index":  &handlers.Index,
+		"Show":   &handlers.Show,
+		"Create": &handlers.Create,
+		"Update": &handlers.Update,
+		"Delete": &handlers.Delete,
+		"New":    &handlers.New,
+		"Edit":   &handlers.Edit,
+	}
+
+	for methodName, handlerPtr := range methodMap {
+		fmt.Printf("Looking for method: %s\n", methodName)
+
+		method := controllerValue.MethodByName(methodName)
+		if !method.IsValid() {
+			fmt.Printf("Method %s not found\n", methodName)
+			continue
+		}
+
+		// Create the handler function
+		*handlerPtr = func(w http.ResponseWriter, r *http.Request) {
+			method.Call([]reflect.Value{
+				reflect.ValueOf(w),
+				reflect.ValueOf(r),
+			})
+		}
+	}
+
+	return handlers
 }

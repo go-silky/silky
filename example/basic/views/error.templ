@@ -1,0 +1,27 @@
+package views
+
+import "fmt"
+
+templ Error(err error, status int) {
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Error { fmt.Sprintf("%d", status) }</title>
+</head>
+
+<body>
+	<div class="error-container">
+		<h1>Error { fmt.Sprintf("%d", status) }</h1>
+		if status == 404 {
+		<p>The page you're looking for could not be found.</p>
+		} else if status == 500 {
+		<p>Something went wrong on our end.</p>
+		} else {
+		<p>{ err.Error() }</p>
+		}
+	</div>
+</body>
+
+</html>
+}
